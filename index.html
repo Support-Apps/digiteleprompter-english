@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teleprompter | How to Build a Successful Digital Course</title>
+<link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700;900&family=Playfair+Display:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --pink:#FFC8DD;--pk-l:#FFF0F5;--pk-s:#FFD6E7;--pk-d:#C9547A;
+  --gold:#C9A84C;--gd-l:#FEF9E7;--gd-s:#F5E0A0;--gd-d:#9B7B2A;
+  --dark:#2A1A0E;--txt:#3D2B1F;--mut:#8B7B6B;--bg:#FFFDF9;--card:#FFFFFF;
+  --hl:#FEF3C7;--hl-b:#C9A84C;--read-bg:#D1FAE5;--read-b:#059669;
+}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Lato',sans-serif;background:var(--bg);color:var(--txt);}
+.app{display:flex;height:100vh;}
+
+.sb{width:310px;min-width:310px;height:100vh;background:var(--card);border-right:3px solid var(--pink);display:flex;flex-direction:column;overflow:hidden;transition:all 0.3s;}
+.sb.collapsed{width:0;min-width:0;border:none;overflow:hidden;}
+.sb-head{padding:15px 16px;border-bottom:2px solid var(--pk-s);background:var(--pk-l);text-align:center;flex-shrink:0;}
+.sb-head h2{font-family:'Playfair Display',serif;color:var(--gd-d);font-size:1.2rem;}
+.sb-head .sub{color:var(--mut);font-size:0.78rem;margin-top:4px;}
+
+.sb-cam-area{padding:10px 12px 5px 12px;background:var(--card);flex-shrink:0;}
+.cam-wrap{position:relative;width:100%;height:140px;overflow:hidden;background:#000;border-radius:10px;border:2px solid var(--pink);}
+.cam-vid{width:100%;height:100%;object-fit:cover;transform:scaleX(-1);}
+.cam-ctrls{position:absolute;bottom:6px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:10;}
+.cam-btn{background:rgba(255,255,255,0.9);border:none;padding:4px 12px;border-radius:12px;font-family:'Lato',sans-serif;font-size:0.75rem;cursor:pointer;font-weight:600;color:var(--txt);backdrop-filter:blur(4px);}
+.cam-btn:hover{background:#fff;}
+.cam-btn.recording{background:#fee2e2;color:#dc2626;}
+.cam-timer{position:absolute;top:6px;left:10px;background:rgba(220,38,38,0.9);color:#fff;padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:600;display:none;}
+.cam-timer.on{display:block;}
+
+.sb-scroll{flex:1;overflow-y:auto;padding:5px 12px 15px 12px;}
+.mg{margin-bottom:6px;}
+.mb{width:100%;text-align:left;background:var(--pk-l);border:1.5px solid var(--pink);border-radius:10px;padding:11px 14px;cursor:pointer;font-weight:700;color:var(--dark);font-size:0.88rem;font-family:'Lato',sans-serif;display:flex;align-items:center;gap:8px;transition:all 0.2s;}
+.mb:hover{background:var(--pk-s);}
+.mb.act{background:var(--gd-l);border-color:var(--gold);color:var(--gd-d);}
+.mb .arr{margin-left:auto;font-size:0.65rem;color:var(--mut);transition:transform 0.3s;}
+.mb.act .arr{transform:rotate(90deg);}
+.ll{display:none;padding:4px 8px 4px 0;}
+.ll.show{display:block;}
+.lb{display:block;width:100%;text-align:left;background:none;border:none;color:var(--mut);padding:9px 12px;font-size:0.83rem;cursor:pointer;border-radius:8px;border-left:3px solid transparent;transition:all 0.2s;font-family:'Lato',sans-serif;}
+.lb:hover{color:var(--txt);background:var(--pk-l);border-left-color:var(--pink);}
+.lb.act{color:var(--gd-d);background:var(--gd-l);border-left-color:var(--gold);font-weight:600;}
+.sb-foot{padding:10px;border-top:2px solid var(--pk-s);background:var(--pk-l);text-align:center;flex-shrink:0;}
+.sb-foot .brand{color:var(--mut);font-size:0.7rem;}
+
+.mn{flex:1;display:flex;flex-direction:column;overflow:hidden;}
+.top{background:var(--card);border-bottom:2px solid var(--pk-s);padding:10px 16px;display:flex;align-items:center;flex-shrink:0;gap:6px;flex-direction:column;align-items:flex-start;}
+#fileInput{display:none;}
+.file-upload-btn{background:var(--gd-l);border:1.5px solid var(--gold);color:var(--gd-d);padding:9px 14px;border-radius:22px;font-family:'Lato',sans-serif;font-size:0.85rem;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;margin:0 3px;flex-shrink:0;}
+.file-upload-btn:hover{background:var(--gold);color:#fff;}
+.tog{background:var(--pk-l);border:1.5px solid var(--pink);color:var(--gd-d);width:40px;height:40px;border-radius:10px;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tog:hover{background:var(--pk-s);}
+.ttl{font-family:'Lato',sans-serif;color:var(--gd-d);font-size:0.88rem;font-weight:400;white-space:nowrap;flex-shrink:0;margin-left:10px;}
+.ctrls{display:flex;align-items:center;gap:6px;justify-content:flex-start;overflow-x:auto;overflow-y:hidden;width:100%;padding:8px 0;-webkit-overflow-scrolling:touch;}
+.ctrls::-webkit-scrollbar{height:6px;}
+.ctrls::-webkit-scrollbar-track{background:transparent;}
+.ctrls::-webkit-scrollbar-thumb{background:var(--pink);border-radius:3px;}
+.ctrls::-webkit-scrollbar-thumb:hover{background:var(--gold);}
+.ctrls>*{flex:1;text-align:center;}
+.cb{background:var(--pk-l);border:1.5px solid var(--pink);color:var(--txt);padding:9px 12px;border-radius:22px;font-family:'Lato',sans-serif;font-size:0.85rem;cursor:pointer;font-weight:600;white-space:nowrap;transition:all 0.2s;margin:0 3px;flex-shrink:0;}
+.cb:hover{background:var(--pk-s);}
+.cb.on{background:var(--gold);border-color:var(--gd-d);color:#fff;}
+.cg{display:flex;align-items:center;justify-content:center;gap:5px;color:var(--txt);font-size:0.85rem;background:var(--pk-l);padding:9px 12px;border-radius:22px;border:1.5px solid var(--pink);white-space:nowrap;font-weight:500;margin:0 3px;flex-shrink:0;}
+.cg span{font-size:0.85rem;}
+.cg input[type=range]{width:70px;accent-color:var(--gold);}
+.sz{background:var(--card);border:1.5px solid var(--pink);color:var(--txt);width:28px;height:28px;border-radius:50%;cursor:pointer;font-size:0.85rem;display:flex;align-items:center;justify-content:center;font-weight:700;flex-shrink:0;}
+.sz:hover{border-color:var(--gold);background:var(--gd-l);}
+
+.tabs{display:flex;background:var(--card);border-bottom:2px solid var(--pk-s);flex-shrink:0;padding:0 20px;}
+.tab{padding:10px 22px;border-bottom:3px solid transparent;color:var(--mut);cursor:pointer;font-size:0.85rem;font-weight:500;transition:all 0.2s;}
+.tab:hover{color:var(--txt);}
+.tab.on{color:var(--gd-d);border-bottom-color:var(--gold);font-weight:700;}
+
+.panels{flex:1;overflow:hidden;position:relative;}
+.pnl{display:none;height:100%;overflow-y:auto;padding:28px 36px 100px;}
+.pnl.on{display:block;}
+
+.tp{font-family:'Playfair Display','Lato',serif;line-height:2.4;}
+.seg{margin-bottom:20px;padding:18px 22px;border-radius:14px;border:1.5px solid transparent;background:var(--card);box-shadow:0 1px 6px rgba(0,0,0,0.02);transition:all 0.3s;}
+.seg.hl{border-color:var(--gold);background:var(--gd-l);}
+.ts-line{color:var(--gd-d);font-weight:700;font-size:1em;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--gd-s);}
+.bc{color:var(--pk-d);font-size:0.8em;margin:6px 0;padding:5px 12px;background:var(--pk-l);border-radius:6px;border-left:3px solid var(--pink);display:inline-block;}
+.ic-cue{color:#059669;font-size:0.8em;margin:4px 0;padding:5px 12px;background:var(--read-bg);border-radius:6px;border-left:3px solid var(--read-b);display:inline-block;}
+
+.sent{display:block;width:100%;clear:both;padding:6px 8px;margin-bottom:8px;border-radius:5px;cursor:pointer;border-left:3px solid transparent;transition:background 0.3s ease,border-color 0.3s ease,opacity 0.3s ease;word-wrap:break-word;}
+.sent.current{background:var(--hl);border-left-color:var(--hl-b);}
+.sent.read{background:var(--read-bg);border-left-color:var(--read-b);opacity:0.65;}
+.sent:hover{background:var(--pk-l);}
+.sent.manual-read{background:var(--read-bg);border-left-color:var(--read-b);opacity:0.65;}
+
+.tip-bx{background:var(--gd-l);border-left:4px solid var(--gold);padding:10px 16px;border-radius:6px;margin-top:10px;color:var(--gd-d);font-size:0.88em;font-weight:500;}
+
+.ai-cd{background:var(--card);border:1.5px solid #D1FAE5;border-radius:12px;padding:18px 22px;margin-bottom:12px;}
+.ai-cd:hover{border-color:#6EE7B7;}
+.ai-cd .lbl{color:var(--gd-d);font-weight:700;font-size:0.9rem;margin-bottom:8px;}
+.pr{font-family:'Courier New',monospace;color:var(--mut);font-size:0.83rem;line-height:1.6;direction:ltr;text-align:left;background:#ECFDF5;padding:12px 16px;border-radius:8px;cursor:pointer;border:1.5px solid transparent;transition:all 0.2s;}
+.pr:hover{border-color:#6EE7B7;}
+.pr.copied{border-color:var(--gold);background:var(--gd-l);}
+.ch{font-size:0.7rem;margin-top:4px;color:#059669;}
+.ic-cd{background:var(--card);border:1.5px solid var(--pk-s);border-radius:12px;padding:14px 18px;margin-bottom:10px;}
+.ic-cd .il{color:var(--pk-d);font-weight:700;font-size:0.86rem;margin-bottom:6px;}
+.ic-pr{font-family:'Courier New',monospace;color:var(--mut);font-size:0.8rem;direction:ltr;text-align:left;background:var(--pk-l);padding:10px 14px;border-radius:8px;cursor:pointer;line-height:1.5;border:1.5px solid transparent;}
+.ic-pr:hover{border-color:var(--pink);}
+
+.welc{text-align:center;padding:80px 20px;}
+.welc .emo{font-size:3rem;margin-bottom:16px;}
+.welc .wt{font-family:'Playfair Display',serif;font-size:1.4rem;color:var(--gd-d);margin-bottom:8px;}
+.welc .wd{color:var(--mut);font-size:0.95rem;line-height:2;}
+
+.prog{position:absolute;bottom:0;left:0;right:0;height:4px;background:var(--pk-l);z-index:5;}
+.prog-f{height:100%;background:var(--gold);width:0;transition:width 0.3s;}
+.sctop{position:absolute;bottom:24px;right:24px;z-index:20;background:var(--gold);color:#fff;border:none;width:40px;height:40px;border-radius:50%;font-size:1.1rem;cursor:pointer;opacity:0;transition:all 0.3s;}
+.sctop.show{opacity:1;}
+
+@media(max-width:768px){
+  .sb,.sb.collapsed{position:fixed;left:0;right:0;top:0;bottom:0;width:100%!important;min-width:100%!important;z-index:100;display:none;border:none;}
+  .sb.mob,.sb.mob.collapsed{display:flex!important;width:100%!important;min-width:100%!important;}
+  .pnl{padding:16px 14px 80px;}
+  .ttl{font-size:0.78rem;}
+  .ctrls{flex:1;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:0;}
+  .ctrls>*{flex:none;}
+  .cb{padding:7px 12px;font-size:0.78rem;margin:0 2px;}
+  .cg{padding:5px 8px;font-size:0.78rem;margin:0 2px;}
+  .cg input[type=range]{width:50px;}
+  .sz{width:24px;height:24px;font-size:0.78rem;}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <aside class="sb collapsed" id="sb">
+    <div class="sb-head"><h2>📚 Course Menu</h2><div class="sub">Select a lesson to begin</div></div>
+    
+    <div class="sb-cam-area">
+      <div class="cam-wrap" id="camWrap">
+        <video class="cam-vid" id="camVid" autoplay muted playsinline></video>
+        <div class="cam-timer" id="camTimer">● 00:00</div>
+        <div class="cam-ctrls">
+          <button class="cam-btn" id="recBtn" onclick="togRec()">⏺ Record</button>
+          <button class="cam-btn" onclick="stopCam()">✕ Close</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sb-scroll" id="sbC"></div>
+    <div class="sb-foot"><div class="brand">🎬 Teleprompter | Digital Course</div></div>
+  </aside>
+
+  <div class="mn">
+    <div class="top">
+      <div style="display:flex;align-items:center;gap:8px;width:100%;">
+        <button class="tog" onclick="togSB()">☰</button>
+        <div class="ttl" id="ttl">Select a lesson to begin</div>
+      </div>
+      <div class="ctrls">
+        <button class="cb" onclick="togPlay()" id="pb">▶ Play</button>
+        <button class="cb" onclick="togFreePlay()" id="fpb">📖 Manual Pace</button>
+        <button class="cb" onclick="handleReset()">🔄 Reset</button>
+        <button class="cb" onclick="togCam()" id="camBtn">📹 Camera</button>
+        <div class="cg"><span>Speed</span><input type="range" min="0.1" max="10" value="1" step="0.1" id="spd" oninput="updSpd()"><span id="spdV">1</span></div>
+        <div class="cg"><span>Size</span><button class="sz" onclick="chFnt(-2)">−</button><span id="fntV">26</span><button class="sz" onclick="chFnt(2)">+</button></div>
+        <input type="file" id="fileInput" accept=".txt" onchange="handleFileUpload(event)" />
+        <button class="file-upload-btn" onclick="document.getElementById('fileInput').click()">📄 Load Course</button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <div class="tab on" onclick="swTab(0)">📜 Script</div>
+      <div class="tab" onclick="swTab(1)">🎨 AI Images</div>
+      <div class="tab" onclick="swTab(2)">✨ Icons</div>
+    </div>
+
+    <div class="panels">
+      <div class="pnl on" id="pnl0">
+        <div class="tp" id="tp" style="font-size:26px">
+          <div class="welc"><div class="emo">🎬</div><div class="wt">Select a lesson from the menu</div><div class="wd">Each sentence highlights automatically as you scroll<br>🟡 Yellow = currently reading | 🟢 Green = already read</div></div>
+        </div>
+      </div>
+      <div class="pnl" id="pnl1"><div class="welc"><div class="emo">🎨</div><div class="wt">AI Image Prompts</div><div class="wd">Select a lesson from the menu</div></div></div>
+      <div class="pnl" id="pnl2"><div class="welc"><div class="emo">✨</div><div class="wt">Pop-up Icons</div><div class="wd">Select a lesson from the menu</div></div></div>
+      <div class="prog"><div class="prog-f" id="progF"></div></div>
+      <button class="sctop" id="scTop" onclick="scToTop()">↑</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   COURSE DATA — How to Build a Successful Digital Course
+   ============================================================ */
+var D = [
+{m:"Module 1: Finding Your Niche",icon:"🔍",lessons:[
+{t:"Lesson 1.1: Choosing the Perfect Topic",d:"8 min",segs:[
+{time:"0:00–1:30 – Why niche matters",body:"Warm smile, lean forward",script:"Most new course creators make one critical mistake — they try to teach everything to everyone. Today we fix that. The most successful digital courses are focused, specific, and solve a clearly defined problem. The narrower your topic, the stronger your market position.",ai:"A side-by-side comparison infographic. LEFT labeled BROAD (red X): a blurry wide-angle photograph of a crowded marketplace with hundreds of signs and no clear focal point. RIGHT labeled NICHE (gold check): a crystal-clear sharp close-up of one perfect product on a clean white table with a golden spotlight. The difference in clarity and focus is dramatic. Simple bold typography underneath: SPECIFIC WINS EVERY TIME. Pastel pink background, modern flat design, 16:9.",tip:"The riches are in the niches — the more specific you are, the more you sell.",icons:[{d:"Target",p:"Bullseye with single arrow hitting center, zooming in, gold, transparent background."}]},
+{time:"1:30–3:30 – Three questions to find your topic",body:"Open hand gestures, confident tone",script:"Ask yourself three questions. First: What do I know that most people don't? Second: What problem have I personally solved? Third: What do people ask me for advice about? The intersection of your knowledge, your experience, and real demand — that is your course topic.",ai:"A Venn diagram with three beautifully illustrated overlapping circles. LEFT circle (soft pink): YOUR KNOWLEDGE with a brain icon. RIGHT circle (mint green): YOUR EXPERIENCE with a star/trophy icon. BOTTOM circle (gold): MARKET DEMAND with a magnifying glass icon. The CENTER overlap glows golden with the label: YOUR PERFECT COURSE TOPIC. Clean white background, elegant typography, professional data visualization, 16:9.",icons:[{d:"Venn",p:"Three overlapping circles lighting up center, gold glow, transparent background."}]},
+{time:"3:30–5:30 – Validating your idea",body:"Speak with confidence",script:"Before you record a single second, validate your idea. Search for your topic on Udemy, Etsy, and Google. If others are selling it — that is great news, not bad news. It means people are willing to pay. Your goal is not to find an empty market; your goal is to find a proven market where you can offer something better or different.",ai:"A mockup of a browser screen showing search results for a course topic across three platforms side by side. LEFT: Udemy with course listings and student counts. CENTER: Etsy with digital product results and sales numbers. RIGHT: Google showing search volume trends graph going up. Each panel has a golden border and a VALIDATED checkmark in the top corner. Clean, professional market research aesthetic, positive mood, 16:9.",icons:[{d:"Validate",p:"Checkmark appearing over search bar, gold sparkle, transparent background."}]},
+{time:"5:30–7:00 – Assignment",body:"Warm smile, direct eye contact",script:"Your assignment: write down five topics you could teach. Then check each one on Udemy or Etsy. Pick the one with the most existing courses — that is your winner. Remember: competition is proof of demand.",ai:"A beautiful flat lay of a notebook opened to a fresh page with five numbered lines. A golden pen rests beside it. On each line, a faint placeholder topic idea is visible. In the top corner: a small laptop showing search results. The scene is warm, organized, and encouraging. Natural lighting, cream paper, soft pink and gold accents, 16:9.",tip:"Competition is not your enemy — it is your market research done for free.",icons:[{d:"Notebook",p:"Notebook opening with five lines filling in, gold pen, transparent background."}]}
+]},
+{t:"Lesson 1.2: Defining Your Ideal Student",d:"7 min",segs:[
+{time:"0:00–1:00 – Why the avatar matters",body:"Warm smile, leaning forward",script:"One of the most common mistakes — creators spend months building a course and then discover nobody buys it. The reason is almost always the same: they never defined exactly who they were talking to. When you speak to everyone, no one feels spoken to.",ai:"A side-by-side before and after illustration. LEFT (muted gray tones): a person standing at a crossroads with multiple confusing arrows pointing in all directions, question marks floating above their head. RIGHT (vibrant pastel colors): the same person confidently walking toward a clear bullseye target, single golden arrow pointing forward, bright background with pink and gold accents. Modern illustration style, 16:9.",icons:[{d:"Avatar",p:"Bullseye target with arrow hitting center, bounce, transparent background."}]},
+{time:"1:00–3:30 – Building your student avatar",body:"Speak as if describing a real friend",script:"Answer these questions about your ideal student. What is their name and age? What do they do every day? What is their biggest problem right now? What have they already tried that did not work? Where do they consume content online? How much are they willing to invest in a solution? The more specific your answers, the better your course will sell.",ai:"A beautifully designed student avatar worksheet on cream paper. Sections with gold headers: Name, Age, Pain Points, Goals, Platforms, Budget. Each section filled with colorful sticky notes in pink and mint. A small illustrated persona card shows a friendly face with key demographics. Gold paperclips and a pink pen complete the scene. Professional template design, organized and visually appealing, 16:9.",icons:[{d:"Avatar",p:"Cartoon person with floating info cards, pastel, transparent background."}]},
+{time:"3:30–5:30 – Five ways to talk to your audience",body:"Speak with confidence",script:"Run polls on social media. Join relevant Facebook groups and read the questions people are asking. Have five to ten direct conversations with people who match your target audience. Read reviews of competing courses on Udemy. Use AI tools to generate a list of the most common questions in your niche.",ai:"A modern infographic showing five audience research channels connected by golden dotted lines in a star pattern. Each channel in a soft pink circle: social media megaphone, group chat bubbles, phone for direct calls, star for competitor reviews, AI brain chip. Center connection point glows gold. Clean white background, professional data visualization style, 16:9.",icons:[{d:"5 channels",p:"Five icons bouncing in sequence, colorful flat, transparent background."}]},
+{time:"5:30–7:00 – Summary",body:"Warm smile",script:"We found a topic, validated the market, and defined our ideal student. In the next lesson we build the structure. Before you move on — fill out your student avatar worksheet. It will guide every decision you make.",ai:"A celebratory completion graphic showing three large checkmarks in a row, each inside a rounded card. First card (pink): TOPIC FOUND with lightbulb icon. Second card (mint): MARKET VALIDATED with chart icon. Third card (gold): STUDENT DEFINED with target icon. Confetti in pink, mint, and gold falling from above. Modern card UI design, celebration mood, 16:9.",tip:"Fill in the student avatar worksheet — it will guide you throughout the entire course.",icons:[{d:"3 checks",p:"Three checkmarks popping one by one, mint green, transparent background."}]}
+]}
+]},
+{m:"Module 2: Course Structure & Planning",icon:"🏗️",lessons:[
+{t:"Lesson 2.1: Mapping Your Course",d:"7 min",segs:[
+{time:"0:00–1:30 – Point A to Point B",body:"Open hand gestures",script:"Every successful course is a journey from Point A to Point B. Point A is where your student is now — with their problems and frustrations. Point B is where they will be after completing your course. Your course is the bridge between those two points. Define both clearly before you record anything.",ai:"A beautiful watercolor-style illustration of a winding path through a gentle landscape. Point A marked with a soft pink flag on the left, Point B marked with a golden flag on the right. The path winds through rolling pastel green hills with small milestone markers along the way. Soft watercolor texture, dreamy atmosphere, baby pink sky. Journey metaphor for course structure, artistic and inspiring, 16:9.",icons:[{d:"Path A to B",p:"Path from A to B with footsteps, pastel pink, gold markers, transparent background."}]},
+{time:"1:30–3:30 – Dividing into modules",body:"Point to the screen",script:"The ideal structure is four to six modules, three to five lessons in each module, and seven to eight minutes per lesson. Why this exact format? Research shows this matches the optimal attention span for online learners. Any longer and completion rates drop dramatically.",ai:"An architect-style blueprint layout showing a course structure plan. Six module cards arranged in a flowing sequence, alternating soft pink and mint with numbers and title placeholders. Golden arrows connect the modules showing progression. Blueprint grid lines in the background, navy blue base with gold and pastel highlights. Professional planning aesthetic, 16:9.",icons:[{d:"Blocks",p:"Building blocks stacking in pastel colors, transparent background."}]},
+{time:"3:30–5:30 – Learning outcomes",body:"Point directly to camera",script:"Every single lesson needs a clear learning outcome. Complete this sentence for each lesson: By the end of this lesson, the student will be able to blank. This gives your course focus, direction, and credibility. Students buy outcomes, not content.",ai:"A beautifully designed learning outcomes checklist on premium cream paper. Five outcome lines in elegant typography, each with a golden checkmark and subtle sparkle. Header reads LEARNING OUTCOMES in gold. Soft pink decorative border, mint green accent line on the left. A golden pen rests at the bottom. Professional document design, warm lighting, 16:9.",icons:[{d:"Checklist",p:"Checklist checking itself off, gold on pink paper, transparent background."}]},
+{time:"5:30–7:00 – Summary",body:"Warm smile",script:"Your assignment: draw your course map. Write Point A on the left — where your student starts. Write Point B on the right — where they end up. Then fill in the modules in between. This map is your north star for everything that follows.",ai:"An overhead flat lay of a hand-drawn course map spread across a wooden desk. A journey from START to FINISH with module stops marked by golden push pins. Colored threads in pink and mint connect the pins. Surrounding items: a compass with gold details, a small notebook, and a cup of coffee. Warm natural lighting, adventure and planning mood, 16:9.",tip:"Lesson structure: Opening → Content → Summary → Assignment",icons:[{d:"Map",p:"Treasure map unrolling with golden X, transparent background."}]}
+]},
+{t:"Lesson 2.2: Writing Scripts",d:"8 min",segs:[
+{time:"0:00–2:00 – Script structure",body:"Speak with confidence",script:"Every great lesson script is built from three parts. First: a hook that grabs attention in the first thirty seconds — your student decides to stay or leave in that moment. Second: the main content — four to five minutes of clear teaching with stories and examples. Third: the summary — one to two minutes that reinforces the key takeaway and teases the next lesson.",ai:"A cozy desk scene with a warm vintage desk lamp casting golden light. An open notebook showing a script template with three clearly labeled sections — HOOK highlighted in pink, CONTENT in mint green, and SUMMARY in gold. A microphone icon sketched in the margin. Warm amber lighting, wooden desk texture, creative writing atmosphere. Professional content creation workspace, 16:9.",icons:[{d:"Clapperboard",p:"Movie clapperboard snapping, black gold, transparent background."}]},
+{time:"2:00–4:00 – Writing techniques",body:"Speak in a friendly, conversational tone",script:"Write your script the way you actually speak — not the way you write an essay. Use personal stories. Give practical tips the student can apply immediately. Ask rhetorical questions to keep the student engaged. The goal is to feel like a smart friend explaining something, not a professor delivering a lecture.",ai:"A comparison illustration showing two speech bubble styles. LEFT (cold gray): a rigid rectangular speech bubble with formal stiff text, frosty tone. RIGHT (warm golden): a friendly rounded speech bubble with conversational text, glowing gold border, pink and mint accents, heart and smile icons nearby. Arrow pointing from cold to warm with the message: TALK LIKE THIS. Clean white background, modern illustration style, 16:9.",icons:[{d:"Speech bubbles",p:"Two chat bubbles, gray to pink with heart, transparent background."}]},
+{time:"4:00–8:00 – Live example",body:"Show the example",script:"Here is a strong opening hook: Did you know that most course creators get stuck at the content stage? Today I will show you exactly how to solve that. Then the content: The secret is a clear structure before you ever turn on the camera. And the summary: Clear content is the foundation of every successful digital course.",ai:"A professional script template on a tablet screen. Three sections color-coded: HOOK at top with pink header and lightning bolt icon (30 seconds), MAIN CONTENT in the middle with mint header and lightbulb icon (4–5 minutes), SUMMARY at bottom with golden header and star icon (1–2 minutes). Time stamps on the right. Modern UI design, clean typography, professional course creation tool aesthetic, 16:9.",tip:"Write the way you speak — not the way you write an essay.",icons:[{d:"Golden pen",p:"Golden pen writing line by line, sparkle trail, transparent background."}]}
+]}
+]},
+{m:"Module 3: Creating Your Course Content",icon:"🎥",lessons:[
+{t:"Lesson 3.1: Recording on a Budget",d:"7 min",segs:[
+{time:"0:00–2:00 – Zero-budget equipment",body:"Point to each item",script:"You do not need an expensive studio. Your smartphone records beautifully — in many cases better than entry-level cameras. Natural light from a window is the best lighting you can get for free. A clean simple background keeps the focus on you. And the single most important investment you can make — a basic USB microphone.",ai:"A budget-friendly home recording setup arranged beautifully. Center: a modern smartphone on a small affordable tripod. Behind it: a window with sheer white curtains letting in soft natural light. Right side: a simple USB microphone on a desk stand. Clean minimally decorated wall with a small plant. Gold price tags showing affordable prices. Warm natural lighting, accessible and encouraging mood, 16:9.",icons:[{d:"Phone",p:"Smartphone on tripod bouncing, camera sparkle, transparent background."},{d:"Microphone",p:"USB mic popping with sound waves, transparent background."}]},
+{time:"2:00–4:00 – Recording without showing your face",body:"Show examples",script:"You have great options if you prefer not to be on camera. Record your slides with a voiceover. Use screen recording software. Loom records your screen with your face in a small corner bubble. OBS Studio is completely free and gives you professional-grade results.",ai:"A screen recording mockup showing a presentation being recorded. The main area shows a clean slide with course content. In the bottom-left corner: a circular webcam window showing a friendly presenter. Top bar shows recording controls with a red button, timer, and pause. The slide has a pastel pink and mint color scheme. Modern screen capture aesthetic, professional yet accessible, 16:9.",icons:[{d:"Screen",p:"Screen with face circle in corner, transparent background."}]},
+{time:"4:00–7:00 – Basic editing",body:"Show the software",script:"DaVinci Resolve is completely free and used by Hollywood professionals. CapCut is simple, beautiful, and very intuitive. Canva Video is the most beginner-friendly option available. Pick one and learn it — you do not need all three.",ai:"Three app interface mockups displayed side by side on a modern desktop. LEFT: DaVinci Resolve with a professional dark timeline interface and FREE in gold. CENTER: CapCut with colorful mobile-friendly editing and auto-subtitle feature highlighted. RIGHT: Canva Video with a drag-and-drop visual editor. Difficulty stars below each app. Soft pink background between windows, professional software comparison style, 16:9.",tip:"Record your very first lesson today — done is better than perfect.",icons:[{d:"Scissors",p:"Scissors cutting film strip, gold, transparent background."}]}
+]},
+{t:"Lesson 3.2: Supplementary Materials",d:"7 min",segs:[
+{time:"0:00–3:00 – Worksheets",body:"Show examples",script:"Supplementary materials dramatically increase the perceived value of your course. Canva is free and has thousands of professional templates. Create worksheets, checklists, quick-reference guides. Students love having something tangible to complete alongside the video.",ai:"A flat lay of beautifully designed course worksheets. Multiple printed pages fanned out: a checklist with golden checkmarks, a fill-in exercise in soft pink, a mind map template in mint green, a progress tracker with colorful bars. A tablet shows the Canva design interface. Gold paper clips and a pink highlighter complete the scene. Professional template showcase, inspiring aesthetic, 16:9.",icons:[{d:"Pages",p:"Colorful pages fanning out, pink mint gold, transparent background."}]},
+{time:"3:00–5:00 – Slide presentations",body:"Show design rules",script:"For all your visual materials, follow three rules. Use a consistent design — two or three colors maximum and one font. Less text on each slide. High quality images only. These three rules separate professional-looking courses from amateur ones.",ai:"A dramatic before and after comparison of slide design. LEFT labeled BEFORE (X): a cluttered slide with tiny text, mismatched fonts, a blurry image, clashing colors — clearly amateur. RIGHT labeled AFTER (check): the same content redesigned beautifully with clean typography, one key message, a high-quality image, consistent pink-gold color palette, and plenty of white space. Professional design tutorial style, 16:9.",icons:[{d:"Before/After",p:"Messy slide to clean slide transformation, transparent background."}]},
+{time:"5:00–7:00 – Summary",body:"Smile, energy",script:"Your assignment: create three slides using Canva, record a practice lesson over them, and watch it back. This one exercise will teach you more than any amount of theory.",ai:"A happy person sitting at a modern desk completing their first course content. Their laptop shows a completed video editing timeline. A progress bar shows 100% with a golden glow. Above their head: floating achievement badges and a confetti burst. Warm pastel workspace with plants and good lighting. Encouraging completion mood, modern flat illustration style, 16:9.",tip:"A consistent template for your entire course saves you hours of design time.",icons:[{d:"Rocket",p:"Rocket launching with sparkle, pink gold, transparent background."}]}
+]},
+{t:"Lesson 3.3: Pop-up Elements & Animations",d:"8 min",segs:[
+{time:"0:00–1:30 – What and why",body:"Show before and after",script:"Pop-up elements — icons, stickers, and animations that appear on screen while you speak — transform an ordinary video into an engaging visual experience. They direct attention, reinforce key points, and make your course feel polished and professional. And they are much simpler to create than most people think.",ai:"Two video player frames side by side. LEFT labeled BEFORE: a plain talking-head video, no graphics, static and boring. RIGHT labeled AFTER: the same video transformed with animated bouncing icons, colorful lower third text, floating emoji reactions, subtle background animation — much more engaging. Golden arrow between them labeled TRANSFORMATION. Modern video production comparison, 16:9.",icons:[{d:"Before/After",p:"Plain frame to exciting frame with stickers, transparent background."}]},
+{time:"1:30–3:30 – Where to get them",body:"Show each website",script:"LottieFiles has thousands of free animations. Flaticon has millions of free icons. Canva has built-in stickers and animated elements. CapCut has incredible built-in effects. Giphy has animated GIFs for every occasion. And Midjourney or DALL-E can generate completely custom stickers for you.",ai:"A modern resource grid showing six sources in two rows of three on a soft pink background. Each in a clean white card: LottieFiles with bouncing animation preview, Flaticon with colorful icon samples, Canva with sticker examples, CapCut with video effects, Giphy with GIFs, Midjourney/DALL-E with AI-generated stickers. Each card has a FREE or AI badge in gold. Professional resource guide layout, 16:9.",icons:[{d:"6 sources",p:"Six app icons appearing in grid, each with sparkle, transparent background."}]},
+{time:"3:30–5:30 – Adding them in CapCut and Canva",body:"Show tutorial",script:"In CapCut: go to Stickers, search for what you need, drag it onto the timeline, and adjust timing. In Canva Video: open Elements, find Animated Sticker, and drag it to your canvas. Everything is drag and drop.",ai:"A tutorial showing two editing interfaces. TOP half: CapCut video editor with a sticker being dragged from the panel onto the timeline — arrow showing drag motion with golden glow. BOTTOM half: Canva Video editor with an element being dragged from the Elements panel to the canvas. Both show the drag-and-drop process with numbered step indicators. Easy to follow visual guide, 16:9.",icons:[{d:"Drag",p:"Hand cursor dragging sticker, sparkle trail, transparent background."}]},
+{time:"5:30–7:00 – Creating with AI",body:"Speak with excitement",script:"The secret to creating custom AI stickers: write a prompt like — cute animated sticker of a golden lightbulb bouncing, cartoon style, transparent background. Download it and add it to your video. All the prompts for this course are in the Icons tab above.",ai:"A magical illustration showing the AI image generation process. Left: a text prompt typed in a search bar — Cute animated lightbulb, bouncing, transparent background. Middle: sparkle and magic wand transformation effects. Right: the finished result — a perfect cute animated lightbulb sticker ready to use. Golden sparkle trail connecting prompt to result. Modern tech-magic aesthetic, 16:9.",icons:[{d:"Magic wand",p:"Magic wand creating sparkles and stickers, gold, rainbow, transparent background."}]},
+{time:"7:00–8:00 – Tips",body:"Summary energy",script:"Two to three elements per minute maximum — any more becomes distracting. Time each element precisely to match what you are saying. Keep a consistent visual style throughout the whole course. Remove any backgrounds using remove.bg before uploading.",ai:"Four elegant tip cards in a 2x2 grid on cream background. Pink card with clock icon: 2–3 elements per minute max. Mint card with target icon: Precise timing with speech. Gold card with palette icon: Consistent style throughout. White card with scissors icon: Remove backgrounds at remove.bg. Clean typography, subtle shadow, professional advice format, 16:9.",tip:"Animations support your message — they do not replace it.",icons:[{d:"4 tips",p:"Four tip stars with icons, transparent background."}]}
+]}
+]},
+{m:"Module 4: Platform & Technology",icon:"💻",lessons:[
+{t:"Lesson 4.1: Choosing Your Platform",d:"8 min",segs:[
+{time:"0:00–3:00 – Platform comparison",body:"Show comparison table",script:"Teachable is the most popular option — easy to use with excellent support. Thinkific has a solid free plan to get started. Gumroad is the simplest possible option for selling digital products including courses. Udemy gives you access to a massive built-in marketplace. WordPress with LearnDash gives you complete control. And Etsy is perfect for PDF-based courses with an existing audience of buyers.",ai:"Six platform comparison cards in a clean grid. Each with a simplified logo and key info: Teachable — Popular, Easy, 4.5 stars. Thinkific — Free plan available, 4 stars. Gumroad — Simplest option, 4 stars. Udemy — Built-in marketplace, 4.5 stars. WordPress + LearnDash — Full control, 4 stars. Etsy — PDF courses, existing audience, 3.5 stars. Soft pink background, gold star ratings, mint highlights for FREE features. Professional platform selection guide, 16:9.",icons:[{d:"6 platforms",p:"Six cards flipping in one by one, transparent background."}]},
+{time:"3:00–5:30 – Setting up",body:"Point to each step",script:"Step one: open your account. Step two: set your course name and description. Step three: upload your syllabus. Step four: upload your content module by module. Step five: set your price. Step six: publish and go live.",ai:"Six stepping stones leading upward from left to right, numbered 1–6 in gold. Stone 1: Open Account (user icon). Stone 2: Set Name and Description (pencil). Stone 3: Upload Syllabus (document). Stone 4: Upload Content (video). Stone 5: Set Price (tag). Stone 6: Publish! (rocket). Path goes from ground level to a cloud with golden glow. Pastel pink and mint stepping stones, encouraging progression metaphor, 16:9.",icons:[{d:"Steps",p:"Steps ascending with footprints, rainbow, transparent background."}]},
+{time:"5:30–8:00 – The sales page",body:"Speak with confidence",script:"Your sales page is your best salesperson. It needs six elements. A compelling headline that speaks directly to the problem. A clear list of what the student will learn. A definition of who this course is for. A clear price with a strong call to action. Social proof in the form of testimonials. And a guarantee to remove risk.",ai:"A wireframe mockup of an ideal course sales page on a laptop. Labeled sections top to bottom: HERO with compelling headline and CTA in gold. WHAT YOU WILL LEARN with benefit bullets. WHO IS THIS FOR. PRICING with highlighted package in gold border. TESTIMONIALS with photos and star ratings. BONUS section in mint green. GUARANTEE badge in pink. FINAL CTA button. Clean wireframe with pastel annotations, 16:9.",tip:"Your sales page must be mobile-optimized — most buyers will see it on their phone.",icons:[{d:"Buy button",p:"BUY button with click sparkle, gold, transparent background."}]}
+]}
+]},
+{m:"Module 5: Marketing & Sales",icon:"📣",lessons:[
+{t:"Lesson 5.1: Marketing Strategies",d:"8 min",segs:[
+{time:"0:00–2:30 – The marketing funnel",body:"Open hand gestures",script:"Your marketing works in three stages. Stage one: free content that provides real value and attracts your ideal students. Stage two: a launch offer at a special introductory price. Stage three: full price sales with bonuses and a satisfaction guarantee.",ai:"A 3D illustration of a marketing funnel at a slight angle. Three distinct layers: TOP (wide, pink): FREE CONTENT — social media posts and blog icons flowing in. MIDDLE (medium, mint): LAUNCH OFFER — email and special price badge. BOTTOM (narrow, gold): FULL SALE — golden checkout button and happy customer icon. Golden sparkles flow through the funnel. Small people moving through each stage. Professional marketing visualization, 16:9.",icons:[{d:"Funnel",p:"Golden funnel with people flowing, transparent background."}]},
+{time:"2:30–5:00 – The AIDA formula",body:"Speak with confidence",script:"AIDA is the foundation of all marketing. Attention — grab their attention with a bold statement or surprising question. Interest — tell them exactly what they will learn. Desire — paint a vivid picture of the result they will achieve. Action — give them a single clear call to action.",ai:"A horizontal infographic showing the AIDA formula as four connected stages. A — Attention: a large eye icon in pink with radiating lines. I — Interest: a glowing lightbulb in mint with information icons. D — Desire: a red and pink heart with dream-like sparkles. A — Action: a launching gold rocket with a BUY NOW button. Each stage connected by elegant golden arrows. Clean modern marketing infographic, 16:9.",icons:[{d:"AIDA",p:"A-I-D-A with icons, sequential pop-in, transparent background."}]},
+{time:"5:00–8:00 – Email list",body:"High energy delivery",script:"A lead magnet — a free mini-guide or worksheet — builds your email list. An automated email sequence nurtures those subscribers toward buying. Social media promotion drives traffic into your funnel. And partnerships with complementary businesses multiply your reach.",ai:"A modern illustration of email marketing and lead magnet strategy. Center: a large email envelope opening to reveal a golden guide — the lead magnet — with sparkle effects. Flowing from the envelope: a chain of automated email icons in sequence numbered 1 through 5. Around the scene: social media icons feeding subscribers into the funnel, and partnership handshake icons. Pastel pink and mint scheme, 16:9.",tip:"Your launch is not an event — it is a process. Every launch teaches you something.",icons:[{d:"Envelope",p:"Envelope opening with confetti, pink gold, transparent background."}]}
+]}
+]},
+{m:"Module 6: Automation & Passive Income",icon:"🤖",lessons:[
+{t:"Lesson 6.1: Automation & Scaling",d:"7 min",segs:[
+{time:"0:00–3:00 – Automated systems",body:"Deliver with excitement",script:"Mailchimp, ConvertKit, and MailerLite let you send perfectly timed emails to new students automatically, twenty-four hours a day. Buffer and Later schedule your social media posts in advance. Zapier connects all your tools together so everything runs without you.",ai:"A sleek automation workflow diagram. Three main tool icons in a row: Email platform (Mailchimp-style) in pink. Social media scheduler (Buffer-style) in mint. Integration hub (Zapier-style) in gold. Golden arrows flow between all three showing automated connections. Small clock icons indicate 24/7 operation. Data flow lines connect to a central analytics dashboard. Futuristic automation aesthetic with glowing pastel elements, 16:9.",icons:[{d:"Gears",p:"Three gears spinning, gold silver mint, transparent background."}]},
+{time:"3:00–5:00 – Scaling",body:"Open hand gestures",script:"Once your base course is selling, you have four clear paths to scale. Create an advanced course for graduates. Offer premium and VIP packages with personal coaching. Build a paid online community around your topic. Launch an affiliate program so others promote your course for you.",ai:"A flourishing money tree growing from a pot labeled YOUR COURSE. The trunk is golden. Four branches: Pink — Advanced Course with course icons. Mint — Premium Packages with VIP badge. Gold — Community Membership with people icons. Green — Affiliate Partnerships with handshake icons. Each branch has golden coins as leaves. Warm sunset background, growth and abundance metaphor. Inspiring mood, 16:9.",icons:[{d:"Tree",p:"Seed growing into money tree, transparent background."}]},
+{time:"5:00–7:00 – Closing",body:"Broad smile, celebration energy",script:"In the upcoming modules we will cover equipment, body language, confidence on camera, and how to know when your course is ready to launch. Everything you have learned so far is your foundation. Now we build the tower.",ai:"A warm celebration illustration. Center: a golden graduation cap floating with sparkle effects. Below: a laptop showing a completed course dashboard. Surrounding elements: golden trophy, colorful confetti in pink and mint, floating achievement badges, a calendar showing progress. Warm golden lighting, celebration mood. Inspiring completion aesthetic, 16:9.",tip:"First step: open the next module and keep going!",icons:[{d:"Confetti",p:"Confetti explosion with trophy, all pastels, transparent background."},{d:"Heart",p:"Pink heart with sparkles expanding, transparent background."}]}
+]}
+]},
+{m:"Module 7: Equipment & Software",icon:"🛠️",lessons:[
+{t:"Lesson 7.1: Recording Gear on a Budget",d:"8 min",segs:[
+{time:"0:00–2:00 – Camera and lighting",body:"Show each item",script:"Your phone is your camera. A tripod costs between five and fifteen dollars. Natural light from a window is the best lighting you can get. A ring light costs between fifteen and thirty dollars and makes a dramatic difference.",ai:"A clean product photography lineup of budget recording equipment on a white surface. From left to right: a modern smartphone on a small tripod (FREE), a ring light ($15–30), a USB microphone on a stand ($25), a simple green screen ($30). Each item has a gold price tag. Warm studio lighting, professional product showcase. The message: you don't need expensive gear. 16:9.",icons:[{d:"Phone",p:"Smartphone transforming to camera, sparkle, transparent background."}]},
+{time:"2:00–4:00 – Audio",body:"Demonstrate the difference",script:"The FIFINE K669 microphone costs about twenty-five dollars and delivers incredible audio quality. Even a simple headset with a built-in microphone is far better than your computer's built-in mic. The rule is simple: bad audio means people leave. Good audio means people stay.",ai:"A side-by-side audio quality comparison. LEFT — BAD AUDIO (red X): a jagged noisy waveform with spikes and distortion on a dark red background. RIGHT — GOOD AUDIO (green check): a clean smooth waveform with consistent levels on a calm mint green background. Golden divider between them. Clear visual metaphor for audio quality importance. Professional audio engineering style, 16:9.",icons:[{d:"Sound waves",p:"Choppy waves transforming to smooth, red to green, transparent background."}]},
+{time:"4:00–6:00 – Background",body:"Show good and bad examples",script:"A clean white wall, a bookshelf, or some plants all make excellent backgrounds. A green screen costs around thirty dollars and lets you use any digital background. One rule above all: make sure the light is on your face, never behind you.",ai:"A split-screen comparison of recording backgrounds. LEFT — WRONG (red X): a messy room with unmade bed, cluttered shelves, harsh overhead lighting, bad camera angle. RIGHT — RIGHT (gold check): the same room tidied — clean bookshelf, green plant, ring light providing soft even illumination, camera at eye level. Dramatic improvement. Interior design meets video production, 16:9.",icons:[{d:"Room",p:"Messy room cleaning up into styled corner, transparent background."}]},
+{time:"6:00–8:00 – Shopping list",body:"Summary energy",script:"For zero dollars: your phone, a window for light, and a clean background. For fifty dollars: add a tripod and a USB microphone. For one hundred dollars: add a ring light and a green screen. There are no more excuses.",ai:"Three equipment budget cards in ascending steps. Card 1 (FREE, pink): smartphone, window light, clean wall — ZERO BUDGET START. Card 2 ($50, mint): adds tripod and USB microphone — BASIC UPGRADE. Card 3 ($100, gold): adds ring light and green screen — FULL SETUP. Each card shows exactly what is included with small icons. Ascending golden arrows between cards. Encouraging pricing guide, 16:9.",tip:"Start with what you have. Upgrade after your first five lessons.",icons:[{d:"3 levels",p:"Three price badges popping, FREE 50 100, transparent background."}]}
+]},
+{t:"Lesson 7.2: Free Software",d:"8 min",segs:[
+{time:"0:00–2:30 – Recording",body:"Show each software",script:"OBS Studio is completely free and used by professionals worldwide. Loom gives you up to twenty-five free videos with screen and face recording. Zoom is perfect for recording live teaching sessions. CapCut lets you record and edit directly from your phone.",ai:"Four software comparison cards on a soft pink background. Each is a clean white rounded rectangle: OBS Studio — dark interface preview, Professional grade, FREE in gold. Loom — friendly interface, Screen + Face, FREE 25 videos badge. Zoom — blue interface, Live Teaching, FREE 40 min badge. CapCut — colorful mobile interface, Phone Recording, FREE badge. Star ratings below each. Clean comparison layout, 16:9.",icons:[{d:"4 apps",p:"Four icons in grid with free badge, transparent background."}]},
+{time:"2:30–5:00 – Editing",body:"Show screen",script:"DaVinci Resolve is completely free and delivers Hollywood-level results. CapCut Desktop adds automatic captions with a single click. Canva Video is perfect for beginners. iMovie is an excellent option for Mac users.",ai:"A comparison layout of four free editing applications. DaVinci Resolve with dark professional timeline — Hollywood Level FREE, difficulty 4/5. CapCut Desktop with auto-subtitles highlighted — Easy + Auto Captions, difficulty 2/5. Canva Video with drag-and-drop interface — Beginner Friendly, difficulty 1/5. iMovie with clean Apple interface — Mac Only, difficulty 2/5. Soft pink dividers, 16:9.",icons:[{d:"Editing",p:"Scissors cutting film, gold, transparent background."}]},
+{time:"5:00–7:00 – Design",body:"Show Canva",script:"Canva handles slides, worksheets, logos, and thumbnails — it does everything. Figma is perfect for more advanced design work. Remove.bg removes backgrounds from images in one click. TinyPNG compresses your images so they load fast. And Google Fonts has thousands of free professional fonts.",ai:"A visual ecosystem map showing free design tools connected in a web. Center hub: CANVA in a large pink circle. Connected by golden lines to: Figma in purple, Remove.bg in mint, TinyPNG in orange, Google Fonts in blue. Each connection line shows what flows between tools. Clean network diagram, professional tool guide, 16:9.",icons:[{d:"Palette",p:"Artist palette with paintbrush, rainbow pastel, transparent background."}]},
+{time:"7:00–8:00 – Summary",body:"High energy",script:"Recording: OBS and Loom. Editing: DaVinci and CapCut. Design: Canva. Everything free and professional. Go install them now.",ai:"A beautifully designed checklist poster titled YOUR FREE PROFESSIONAL TOOLKIT in elegant gold lettering. Three sections: RECORDING — OBS Studio, Loom checked off. EDITING — DaVinci Resolve, CapCut checked off. DESIGN — Canva, Remove.bg checked off. Each item has a golden checkmark and a small app icon. Footer: Install everything today — one hour saves months. Pastel pink border, premium poster design, 16:9.",tip:"Install everything today — one hour of setup saves you months of frustration.",icons:[{d:"Toolbox",p:"Toolbox opening with tools flying out, transparent background."}]}
+]}
+]},
+{m:"Module 8: Body Language & Presence",icon:"🎭",lessons:[
+{t:"Lesson 8.1: Body Language That Radiates Confidence",d:"8 min",segs:[
+{time:"0:00–1:30 – Why it matters",body:"Stand tall, genuine smile",script:"Seventy percent of all human communication is non-verbal. People feel whether you are confident before they hear a single word. In this lesson we will learn the specific techniques that make you look and feel like a professional presenter — from the very first lesson you record.",ai:"A confident woman standing in front of a camera setup in a home studio. She has open body language: shoulders back, genuine smile, hands visible and relaxed at her sides. Warm golden key light illuminating her face. Behind her: a clean organized background with a bookshelf and plant. Soft pink and mint color accents in the room. Aspirational but achievable home studio setting, 16:9.",icons:[{d:"Power",p:"Superhero cape flowing, power pose, gold pink, transparent background."}]},
+{time:"1:30–3:00 – Eye contact",body:"Look directly into the camera lens",script:"Look directly into the camera lens — this creates genuine personal connection with each viewer. The most common mistake: reading from a screen. When you read from a screen your eyes shift back and forth and it looks unnatural. Use a teleprompter exactly like the one you are using right now.",ai:"A split-screen comparison of eye contact in video. LEFT — WRONG (subtle red): a person looking down at their desk reading from notes, eyes darting, nervous disconnected expression. RIGHT — RIGHT (warm gold): the same person looking directly into the camera lens with a warm engaging gaze, creating instant connection. Golden circle highlighting the camera lens. Dramatic difference in connection feeling, 16:9.",icons:[{d:"Eye contact",p:"Friendly eyes making contact, sparkle, transparent background."}]},
+{time:"3:00–4:30 – Hands",body:"Demonstrate each gesture",script:"Keep your hands visible with open palms — this signals honesty and openness. Use hand gestures to emphasize key points. Count on your fingers when listing multiple items. Never cross your arms and never put your hands in your pockets.",ai:"A visual guide showing hand gestures. TOP row (green check, DO): open palms showing trust, hands at chest level during emphasis, natural relaxed position. BOTTOM row (red X, DONT): crossed arms over chest, hands stuffed in pockets, fidgeting with an object. Clear photographs or illustrations with pink and mint color coding. Clean instructional layout, 16:9.",icons:[{d:"Hands",p:"Open palms, trust icon, gold sparkle, transparent background."}]},
+{time:"4:30–5:30 – Posture",body:"Stand up straight",script:"Open shoulders — this signals confidence immediately. Sit on the edge of your chair rather than leaning back. Lean slightly toward the camera when making an important point. Never slouch — the camera makes it look even worse.",ai:"A dramatic before and after posture comparison. LEFT (gray, BEFORE): person slouching in chair, shoulders hunched, leaning back from camera, chin down — looks disinterested and insecure. RIGHT (golden, AFTER): same person on edge of chair, shoulders open, slight forward lean toward camera, chin level — looks confident, engaged, professional. Golden transformation arrow between them, 16:9.",icons:[{d:"Posture",p:"Person standing tall, confidence lines, transparent background."}]},
+{time:"5:30–6:30 – Voice",body:"Demonstrate tone changes",script:"Vary your tone — never be monotone. Speak as if you are telling an exciting story. Slow down on important words. Pause slightly at the end of a critical sentence to let it land.",ai:"An audio visualization comparison. TOP — MONOTONE (boring): a flat straight-line audio waveform in dull gray, with a sleeping emoji and bored viewer faces. BOTTOM — DYNAMIC (engaging): a varied expressive waveform with peaks and valleys in vibrant gold and pink, with alert happy emoji and engaged viewer faces. Musical note icons around the dynamic version. Clear visual metaphor for voice variety importance, 16:9.",icons:[{d:"Voice",p:"Colorful sound waves, engaging voice, transparent background."}]},
+{time:"6:30–7:30 – Facial expressions",body:"Demonstrate each expression",script:"A genuine smile — not a forced one. A subtle nod to show engagement. Raise your eyebrows to signal a question or surprise. People can detect a fake smile instantly, so only smile when you genuinely mean it.",ai:"A facial expression coaching chart showing four key expressions in a 2x2 grid. GENUINE SMILE with sparkle — warm, authentic, eyes crinkle. HEAD NOD — subtle agreement showing engagement. RAISED EYEBROW — curious questioning look. ENGAGED LISTENING FACE — focused attentive expression. Each with a green checkmark. Clean coaching guide layout, 16:9.",icons:[{d:"Smile",p:"Warm smile icon with sparkle, transparent background."}]},
+{time:"7:30–8:00 – Warm-up",body:"Demonstrate",script:"Before every recording session: speak out loud for two minutes on any topic. Drink water. Smile at the camera for thirty seconds. Then record and watch it back. Watching yourself back is the single fastest way to improve.",ai:"A step-by-step pre-recording warmup as a horizontal timeline. Step 1 (2 min): person talking to a wall with speech bubbles — VOCAL WARMUP. Step 2: water glass — HYDRATE. Step 3 (30 sec): person smiling at camera — SMILE AT LENS. Step 4: person watching playback on phone — WATCH AND IMPROVE. Golden arrows connect each step. Friendly pastel illustration style, 16:9.",tip:"Thirty seconds of daily camera practice plus watching it back equals dramatic improvement within two weeks.",icons:[{d:"Timer",p:"Stopwatch with 30 seconds, gold mint, transparent background."}]}
+]}
+]},
+{m:"Module 9: Confidence on Camera",icon:"💪",lessons:[
+{t:"Lesson 9.1: Speaking with Confidence",d:"8 min",segs:[
+{time:"0:00–1:30 – The most common fear",body:"Speak with empathy and a warm smile",script:"If the thought of standing in front of a camera makes you nervous — you are in excellent company. Eighty percent of people feel insecure the first time they record themselves. That is completely normal. Here is the great news: confidence on camera is a muscle. The more you train it, the stronger it gets.",ai:"A transformation journey in three panels. PANEL 1 (left, muted): a person nervously in front of a camera, tense shoulders, avoiding the lens, butterfly icons in stomach area. PANEL 2 (middle, warming up): same person practicing, starting to relax, half-smile. PANEL 3 (right, vibrant): the same person standing confidently, natural smile, open posture, golden glow, vibrant pink and gold colors. Progress arrow underneath. Encouraging transformation story, 16:9.",icons:[{d:"Butterflies",p:"Butterflies flying around then settling down, nervousness to calm, pastel, transparent background."},{d:"Muscle",p:"Arm muscle flexing, confidence strength icon, gold, transparent background."}]},
+{time:"1:30–3:00 – Secrets of the pros",body:"Speak with quiet confidence",script:"The biggest secret in content creation: nobody succeeds on the first try. Every creator you admire was terrible when they started. The difference? They kept going. The second secret: do not try to be perfect. Perfect is boring. Authentic is compelling. People want to see a real human being, not a polished robot.",ai:"A dramatic before and after showing content creator growth. LEFT — FIRST VIDEO: webcam footage, bad lighting, awkward expression, messy background, low view count. RIGHT — VIDEO 100: professional lighting, confident expression, branded background, polished editing, high engagement. A golden growth arrow between them showing the improvement journey. The message: everyone starts somewhere. Encouraging comparison, 16:9.",icons:[{d:"Before/After",p:"Shaky nervous frame vs. confident pro frame, growth transformation, transparent background."},{d:"Authentic heart",p:"Heart with 'real' written inside, authenticity icon, pink with gold border, transparent background."}]},
+{time:"3:00–4:30 – The empty room exercise",body:"Demonstrate to camera",script:"The most effective practice exercise: every day, stand in front of your phone camera and speak for one minute about any topic that comes to mind. The weather, what you ate, a thought you had. The topic does not matter — speaking does. After one week, watch your recordings back. After two weeks, you will feel a dramatic shift.",ai:"A motivational practice routine illustration. Center: a person standing comfortably in front of their phone on a tripod, talking naturally. Around them: a 7-day calendar with each day checked off in gold, a confidence chart rising from day 1 to day 7. Speech bubble with random topics: weather, food, an idea. Timer showing 1:00. The mood is casual and encouraging. Pastel pink room, warm lighting, 16:9.",icons:[{d:"Phone + speaking",p:"Phone camera recording person talking, daily practice, calendar marks, transparent background."},{d:"Progress chart",p:"Improvement graph climbing over 14 days, mint green to gold, transparent background."}]},
+{time:"4:30–5:30 – The rule of three takes",body:"Speak with confidence",script:"Three takes per lesson. Take one is your warm-up — you will delete it. Take two is your real recording. Take three is your backup if something felt off. Always keep the best one. Nobody will ever know you recorded three times.",ai:"Three film frame icons numbered TAKE 1, TAKE 2, TAKE 3 in elegant gold. TAKE 1 slightly transparent with warmup label and recycle icon. TAKE 2 glows with gold border, starred, labeled THE ONE with checkmark. TAKE 3 slightly transparent labeled BACKUP. Below: a secret badge saying Nobody knows you recorded three times. Film production aesthetic with pastel colors, 16:9.",icons:[{d:"3 takes",p:"Three film frames numbered 1 2 3, middle glowing gold as selected, transparent background."}]},
+{time:"5:30–6:30 – When you get stuck",body:"Speak calmly",script:"Everyone gets stuck mid-sentence. It happens to every creator at every level. The solution is simple: stop, breathe, repeat the last sentence you completed correctly. In editing, cut that moment out and no one will ever know. There is no need to restart from the beginning because of one stumble.",ai:"An illustration showing the video editing rescue process. A film strip running horizontally. One frame in the middle highlighted in red showing a BLOOPER — stumbling over words. Golden scissors cutting out just that one frame. Below: the resulting clean film strip with the blooper removed, looking seamless. The message: just cut and continue. Encouraging editing-as-safety-net concept, 16:9.",icons:[{d:"Scissors",p:"Scissors cutting out a small piece of film, gold scissors, transparent background."},{d:"Breath",p:"Person breathing in calmly, zen breath circle, peaceful mint icon, transparent background."}]},
+{time:"6:30–8:00 – Energy and authenticity",body:"Deliver with high energy",script:"The last and most important tip: raise your energy twenty percent above what feels natural. The camera absorbs energy — what feels normal in real life looks flat on a screen. If you feel like you might be slightly over the top — that is exactly how it looks good on camera. And above all: be yourself. Your audience will love you precisely because of who you are.",ai:"A visualization of the camera energy rule. LEFT: a person speaking at normal energy with a meter showing 100%. CENTER: a camera lens with absorption waves pulling energy inward, meter showing 80% — flat on screen. RIGHT: a TV screen showing the flat result. SOLUTION arrow pointing up: boost to 120% in real life to appear at 100% on screen. Gold meter, pink and mint accents, 16:9.",tip:"Daily exercise: one minute on camera about any random topic. After 14 days the difference will amaze you.",icons:[{d:"Energy",p:"Energy lightning bolt with +20% badge, power boost icon, gold electric, transparent background."},{d:"Mirror",p:"Mirror reflecting confident person, self-acceptance icon, pink frame gold reflection, transparent background."}]}
+]}
+]},
+{m:"Module 10: Why Your Course Is Worth Buying",icon:"💎",lessons:[
+{t:"Lesson 10.1: The Real Value of Your Course",d:"8 min",segs:[
+{time:"0:00–1:30 – Imposter syndrome",body:"Speak with deep empathy",script:"Almost every new course creator asks themselves: why would anyone pay me? What do I really know? Who am I to be teaching anyone? This is imposter syndrome — and it is a liar. The truth: if your knowledge has helped even one person solve a problem, that knowledge has monetary value. And the fact that you are here learning how to build a course means you are already more serious than ninety percent of people who have the same idea.",ai:"A powerful illustration of overcoming imposter syndrome. A person in front of a large mirror. Their reflection shows TWO versions: a fading gray ghost reflection showing doubt, question marks, and the words Who am I to teach? Emerging through it: a vibrant golden reflection showing the real them — confident, knowledgeable, with value icons floating around — lightbulb, star, trophy, heart. The real reflection breaking through the doubt. Emotional transformation moment, 16:9.",icons:[{d:"Mirror",p:"Mirror showing scared face transforming to confident face, transparent background."},{d:"Crown",p:"Golden crown appearing on head, self-worth discovery, sparkle, transparent background."}]},
+{time:"1:30–3:00 – Five types of value",body:"Speak with confidence, hands visible",script:"Value type one: time savings — people pay to avoid spending months on trial and error. Value type two: organization — you arrange information in a clear and logical way they could not do alone. Value type three: experience — you have already made the mistakes and can save them from doing the same. Value type four: motivation — you guide and encourage them through the hard parts. Value type five: community — you create a sense of belonging.",ai:"Five beautifully designed value proposition cards in a fan layout. PINK: clock icon — TIME SAVING. MINT: folder icon — ORGANIZATION. GOLD: star icon — EXPERIENCE. PINK: heart icon — MOTIVATION. MINT: people icon — COMMUNITY. Premium card design with subtle shadows, 16:9.",icons:[{d:"5 values",p:"Five icons appearing in sequence: clock, folder, gold star, pink heart, people group, transparent background."},{d:"Clock",p:"Clock with fast-forward arrow, time saving icon, gold, transparent background."}]},
+{time:"3:00–4:30 – Pricing your course",body:"Speak with confidence about price",script:"Never price your course based on how many hours of video it contains. Price it based on the value the student receives. Ask yourself: how much is it worth to someone to solve this problem? If your course saves them months of self-study, it is worth hundreds of dollars. If your course helps them earn money, it is worth thousands.",ai:"An elegant mathematical formula on a premium dark background with golden typography. The equation: VALUE OF PROBLEM SOLVED multiplied by TIME SAVED equals YOUR REAL PRICE. Below: two examples — If your course saves someone 6 months of learning = worth hundreds. If your course helps someone earn money = worth thousands. Golden chalk on blackboard aesthetic with small illustrations, 16:9.",icons:[{d:"Price formula",p:"Equation with problem + time = price tag, golden math formula, transparent background."},{d:"Price tag",p:"Price tag with gold sparkle, premium value icon, transparent background."}]},
+{time:"4:30–6:00 – Writing your sales copy",body:"Point to an example on screen",script:"Never write about what is in your course — write about what your course will do for the student. Not a six-hour course on photography — but you will take professional photos with your phone within one week. Not thirty lessons — but you will start earning from your knowledge within thirty days. Always lead with outcomes, never with features.",ai:"A dramatic copywriting transformation. LEFT — FEATURES (red X, boring): a dull gray box listing 6 hours of video, 30 lessons, PDF worksheets. RIGHT — OUTCOMES (gold check, compelling): a vibrant golden box — You will take professional photos within one week, You will start earning from your knowledge within a month. Same content, completely different emotional impact. Marketing copywriting masterclass visual, 16:9.",icons:[{d:"Features to outcomes",p:"Feature list transforming into outcome statement, dull to exciting, transparent background."},{d:"Green check",p:"Green checkmark with 'results' text, outcome focus icon, transparent background."}]},
+{time:"6:00–7:30 – Social proof",body:"Speak with enthusiasm",script:"Testimonials are your most powerful sales tool. Even if this is your first course — offer free access to five people in exchange for honest feedback. A genuine testimonial is worth more than any marketing copy you could write. Extra tip: collect video testimonials whenever possible — a video review is ten times more credible than text.",ai:"A social proof wall showing customer testimonials. Multiple video thumbnail frames in a mosaic pattern, each showing a happy person with a play button overlay. Between the videos: golden 5-star rating badges, quote snippets in elegant pink cards, and verified purchase badges in mint green. A large overall 4.9 star rating in gold at the top. Professional testimonial showcase, trust-building aesthetic, 16:9.",icons:[{d:"Stars",p:"Five gold stars filling in one by one, rating animation, transparent background."},{d:"Video testimonial",p:"Video player with happy person speaking, testimonial icon, warm frame, transparent background."}]},
+{time:"7:30–8:00 – Final reminder",body:"Speak from the heart with complete sincerity",script:"Your course is worth buying because you put your real experience, your real knowledge, and your heart into it. Nobody in the world can teach what you teach — in the way that you teach it. That is your unique value and no one can copy it.",ai:"A powerful closing illustration with a large golden heart radiating warm light. Inside the heart: a brain for knowledge, a star for value, and open hands for giving. Light rays illuminate floating words: Experience, Passion, Your Unique Voice, Authenticity. Subtle confetti in pink and mint surrounding the scene. The message: your course is worth buying because YOU made it. Emotional, inspiring, celebration of unique value, 16:9.",tip:"Write five sentences beginning with 'My course is worth buying because...' and save them for days of doubt.",icons:[{d:"Golden heart",p:"Golden heart radiating light rays, self-worth affirmation, transparent background."},{d:"Diamond crown",p:"Diamond crown with sparkles, premium value icon, transparent background."}]}
+]}
+]},
+{m:"Module 11: How to Know When Your Course Is Ready",icon:"✅",lessons:[
+{t:"Lesson 11.1: Knowing When Your Course Is Ready to Launch",d:"8 min",segs:[
+{time:"0:00–1:30 – The perfection trap",body:"Speak with empathy and a smile",script:"One of the biggest challenges every course creator faces is the feeling that the course is never quite finished. There is always one more thing to add. One more lesson. One more bonus. This is the perfection trap. Perfect does not mean flawless — perfect means your course does exactly what it promised to do. It needs to take the student from Point A to Point B. Nothing more, nothing less.",ai:"A beautifully illustrated balance scale. LEFT (tilting dangerously, red tone): an overloaded course represented by a tower of stacked books, videos, and documents piling dangerously high, about to topple. RIGHT (perfectly balanced, golden glow): a focused course represented by a clean organized small stack of essential materials with a golden checkmark on top. The message: less focused content beats more unfocused content. Clean minimalist illustration, 16:9.",icons:[{d:"Balance",p:"Balance scale tipping from overloaded to balanced, gold, transparent background."},{d:"Target",p:"Bullseye with single arrow, focus, transparent background."}]},
+{time:"1:30–3:00 – Five signs your course is ready",body:"Speak with confidence, hands visible",script:"Sign one: each lesson covers exactly one topic. Sign two: the student gets a clear answer to the question that was promised to them. Sign three: there is a practical assignment at the end of each module. Sign four: you feel confident that everything you promised to teach is in the course. Sign five: you can explain the entire course in one sentence to a friend and they immediately understand why it is valuable.",ai:"A premium course readiness checklist on beautiful cream paper with gold details. Five items with golden checkmarks: (1) Each lesson covers ONE topic only. (2) Student gets clear answer to promised question. (3) Practical assignment at end of each module. (4) All promised content is included. (5) You can explain the course in one sentence to a friend. Title in elegant gold: IS YOUR COURSE READY? Professional quality assessment checklist, 16:9.",icons:[{d:"5 signs",p:"Five checkmarks appearing one by one, gold on pink paper, transparent background."}]},
+{time:"3:00–4:30 – Less is more than perfect",body:"Speak with confidence",script:"Hear this clearly: done is more than perfect. Your first course does not need to be your masterpiece. It needs to be good. It needs to be effective. And it needs to be launched. Remember: a course that is never launched never changes anyone's life. A launched course — even an imperfect one — has the power to change everything.",ai:"A large light switch on a wall. The switch is being flipped from OFF (left, dark gray) labeled OVERTHINKING AND PERFECTIONISM with thought bubbles showing endless edits, to ON (right, bright golden glow) labeled LAUNCHING AND MAKING IMPACT with celebration sparks and a rocket launching. The wall transitions from gray to warm golden illumination. Powerful visual metaphor for the decision to launch, 16:9.",icons:[{d:"Rocket",p:"Rocket launching from perfectionism cage, freedom, transparent background."}]},
+{time:"4:30–6:00 – The solution: an advanced course",body:"Speak with excitement",script:"Here is the great news: all the content that did not fit into your first course? That is the gold that becomes your advanced course. Instead of cramming everything into one overwhelming course, create a foundation course and an advanced course. The advanced course gives you an additional product to sell, serves your most motivated students, and shows that you are an expert who keeps developing.",ai:"An architectural building blocks illustration showing a two-level course strategy. BOTTOM LEVEL (solid, pink and gold): strong building blocks labeled FOUNDATION COURSE with essential module cards. TOP LEVEL (reaching higher, mint and gold): additional blocks labeled ADVANCED COURSE. Golden bridge connects them. The message: build two courses instead of cramming into one. Professional infographic, 16:9.",icons:[{d:"Tower",p:"Tower building from solid base, two-level course, gold pink, transparent background."},{d:"Ladder",p:"Ladder with person climbing, growth, transparent background."}]},
+{time:"6:00–7:30 – How to decide what goes where",body:"Speak calmly",script:"The rule of thumb: content that gives a direct answer to the core promised question goes in the foundation course. Content that requires deeper prerequisite knowledge goes in the advanced course. Content that is not directly related to the main topic becomes a bonus or a future course. And the ultimate test: show your course to three people from your target audience. If they understand it — it is ready.",ai:"Three diverse people sitting with laptops watching a course. Above each: feedback cards showing thumbs up, helpful suggestions, and 5-star ratings. The course creator stands to the side taking notes with a satisfied smile. Warm collaborative atmosphere, pink and mint workspace, golden highlights. The ultimate beta test validation moment, 16:9.",icons:[{d:"Beta test",p:"Three thumbs up, beta test icon, transparent background."}]},
+{time:"7:30–8:00 – Course closing",body:"Broad smile, celebration energy",script:"We have reached the end of the course! You now have all the knowledge, all the tools, and all the confidence to create a successful digital course that will sell again and again. Go make it happen! Your first course does not need to be perfect — it needs to be launched. Massive congratulations and go create!",ai:"A grand celebration scene marking course completion. Center: a golden trophy and graduation cap floating with dramatic sparkle effects. Surrounding them: an explosion of confetti in pink, mint, and gold. A laptop showing COURSE COMPLETE on screen with a 100% progress bar. Floating achievement badges: all modules done, first course created, ready to launch. Banner: GO CREATE AND LAUNCH! Joyful, empowering celebration mood with warm golden lighting, 16:9.",tip:"First step: start building your course now. It doesn't need to be perfect — it needs to be launched!",icons:[{d:"Confetti",p:"Confetti explosion with trophy, transparent background."},{d:"Heart",p:"Pink heart expanding with gold sparkles, transparent background."}]}
+]}
+]}
+];
+</script>
+<script>
+/* ============================================================
+   FILE UPLOAD & PARSING
+   ============================================================ */
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const content = e.target.result;
+      const parsedData = parseTextToCourse(content);
+      D.length = 0;
+      D.push(...parsedData);
+      buildSB();
+      handleReset();
+      if(D.length > 0 && D[0].lessons) {
+        loadL(0, 0);
+        document.getElementById('sb').classList.remove('collapsed');
+      }
+      alert('✅ Course loaded successfully!');
+    } catch (error) {
+      alert('❌ Error processing file: ' + error.message);
+    }
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+function parseTextToCourse(content) {
+  const lines = content.split('\n');
+  const modules = [];
+  let currentModule = null;
+  let currentLesson = null;
+  let currentSegment = null;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith('###')) {
+      const title = trimmed.replace(/^###\s*/, '').trim();
+      currentModule = { m: title, icon: '📖', lessons: [] };
+      modules.push(currentModule);
+      currentLesson = null;
+      currentSegment = null;
+    } else if (trimmed.startsWith('##')) {
+      if (!currentModule) {
+        currentModule = { m: 'Module 1', icon: '📖', lessons: [] };
+        modules.push(currentModule);
+      }
+      const title = trimmed.replace(/^##\s*/, '').trim();
+      currentLesson = { t: title, d: '', segs: [] };
+      currentModule.lessons.push(currentLesson);
+      currentSegment = null;
+    } else if (trimmed.startsWith('#') && !trimmed.startsWith('##')) {
+      if (currentLesson) {
+        const timeStr = trimmed.replace(/^#\s*/, '').trim();
+        currentLesson.d = timeStr;
+        currentSegment = { time: timeStr, body: '', script: '', ai: '', tip: '', icons: [] };
+        currentLesson.segs.push(currentSegment);
+      }
+    } else if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+      if (currentSegment) {
+        currentSegment.body = trimmed.slice(1, -1);
+      }
+    } else if (trimmed.length > 0) {
+      if (currentSegment) {
+        currentSegment.script += (currentSegment.script ? ' ' : '') + trimmed;
+      } else if (currentLesson) {
+        if (!currentLesson.segs.length) {
+          currentSegment = { time: '', body: '', script: '', ai: '', tip: '', icons: [] };
+          currentLesson.segs.push(currentSegment);
+        }
+        currentSegment.script += (currentSegment.script ? ' ' : '') + trimmed;
+      }
+    }
+  }
+  return modules;
+}
+
+/* ============================================================
+   MAIN APP LOGIC
+   ============================================================ */
+var curM = null, curL = null, curS = 0;
+var playing = false, freePlay = false;
+var spd = 1;
+var timer = null;
+var recInterval = null;
+var recSec = 0;
+var mediaRecorder = null;
+var recordedChunks = [];
+
+function buildSB() {
+  var h = '';
+  D.forEach(function(m, mi) {
+    h += '<div class="mg">';
+    h += '<button class="mb" onclick="togM(' + mi + ')" id="mb' + mi + '"><span>' + (m.icon || '📖') + '</span> ' + m.m + '<span class="arr">▶</span></button>';
+    h += '<div class="ll" id="ll' + mi + '">';
+    m.lessons.forEach(function(l, li) {
+      h += '<button class="lb" onclick="loadL(' + mi + ',' + li + ')" id="lb' + mi + '_' + li + '">⏱️ ' + l.t + ' (' + l.d + ')</button>';
+    });
+    h += '</div></div>';
+  });
+  document.getElementById('sbC').innerHTML = h;
+}
+
+function togSB() { document.getElementById('sb').classList.toggle('collapsed'); }
+
+function togM(mi) {
+  var l = document.getElementById('ll' + mi);
+  var b = document.getElementById('mb' + mi);
+  var s = l.classList.contains('show');
+  document.querySelectorAll('.ll').forEach(function(el) { el.classList.remove('show'); });
+  document.querySelectorAll('.mb').forEach(function(el) { el.classList.remove('act'); });
+  if(!s) { l.classList.add('show'); b.classList.add('act'); }
+}
+
+function loadL(mi, li) {
+  curM = mi; curL = li; curS = 0;
+  playing = false; freePlay = false;
+  clearInterval(timer);
+  document.querySelectorAll('.lb').forEach(function(el) { el.classList.remove('act'); });
+  var targetBtn = document.getElementById('lb' + mi + '_' + li);
+  if(targetBtn) targetBtn.classList.add('act');
+  if(D[mi] && D[mi].lessons[li]) {
+    document.getElementById('ttl').textContent = D[mi].m + ' 👉 ' + D[mi].lessons[li].t;
+  }
+  document.getElementById('pb').innerHTML = '▶ Play';
+  document.getElementById('pb').classList.remove('on');
+  document.getElementById('fpb').classList.remove('on');
+  buildP();
+  swTab(0);
+  updProg();
+}
+
+function buildP() {
+  if(!D[curM] || !D[curM].lessons[curL]) return;
+  var les = D[curM].lessons[curL];
+  var hTp = '', hAi = '', hIc = '';
+
+  les.segs.forEach(function(s, i) {
+    hTp += '<div class="seg" id="seg' + i + '"><div class="ts-line">' + s.time + '</div>';
+    if(s.body) hTp += '<div class="bc">🎬 Direction: ' + s.body + '</div><br>';
+    if(s.iconcue) hTp += '<div class="ic-cue">💡 Producer note: ' + s.iconcue + '</div><br>';
+
+    var sentences = s.script.match(/[^.!?]+[.!?]*[\s]*/g) || [s.script];
+    sentences.forEach(function(ch, ci) {
+      ch = ch.trim();
+      if(ch.length > 0) {
+        hTp += '<span class="sent" id="sent_' + i + '_' + ci + '" onclick="clkSent(' + i + ',' + ci + ')">' + ch + '</span>';
+      }
+    });
+
+    if(s.tip) hTp += '<div class="tip-bx">💡 Gold tip: ' + s.tip + '</div>';
+    hTp += '</div>';
+
+    if(s.ai) {
+      hAi += '<div class="ai-cd"><div class="lbl">🎨 Frame ' + s.time + '</div><div class="pr" onclick="copyP(this)">' + s.ai + '</div><div class="ch">Click to copy</div></div>';
+    }
+    if(s.icons && s.icons.length > 0) {
+      s.icons.forEach(function(ic) {
+        hIc += '<div class="ic-cd"><div class="il">✨ Pop-up icon: ' + ic.d + '</div><div class="ic-pr" onclick="copyP(this)">' + ic.p + '</div><div class="ch">Click to copy prompt</div></div>';
+      });
+    }
+  });
+
+  document.getElementById('pnl0').innerHTML = '<div class="tp" id="tp" style="font-size:' + document.getElementById('fntV').textContent + 'px">' + hTp + '</div>';
+  document.getElementById('pnl1').innerHTML = hAi || '<div class="welc"><div class="emo">🎨</div><div class="wt">No prompts for this lesson</div></div>';
+  document.getElementById('pnl2').innerHTML = hIc || '<div class="welc"><div class="emo">✨</div><div class="wt">No icons for this lesson</div></div>';
+}
+
+function swTab(ti) {
+  document.querySelectorAll('.tab').forEach(function(t, i) { if(i===ti) t.classList.add('on'); else t.classList.remove('on'); });
+  document.querySelectorAll('.pnl').forEach(function(p, i) { if(i===ti) p.classList.add('on'); else p.classList.remove('on'); });
+}
+
+function clkSent(si, ci) { if(!freePlay) return; document.getElementById('sent_' + si + '_' + ci).classList.toggle('manual-read'); }
+
+function togPlay() {
+  if(curM===null) return;
+  freePlay = false; document.getElementById('fpb').classList.remove('on');
+  playing = !playing;
+  if(playing) {
+    document.getElementById('pb').innerHTML = '⏸ Pause'; document.getElementById('pb').classList.add('on'); startScroll();
+  } else {
+    document.getElementById('pb').innerHTML = '▶ Play'; document.getElementById('pb').classList.remove('on'); clearInterval(timer);
+  }
+}
+
+function togFreePlay() {
+  if(curM===null) return;
+  playing = false; clearInterval(timer);
+  document.getElementById('pb').innerHTML = '▶ Play'; document.getElementById('pb').classList.remove('on');
+  freePlay = !freePlay;
+  if(freePlay) document.getElementById('fpb').classList.add('on'); else document.getElementById('fpb').classList.remove('on');
+}
+
+function handleReset() {
+  playing = false; freePlay = false; clearInterval(timer);
+  document.getElementById('pb').innerHTML = '▶ Play'; document.getElementById('pb').classList.remove('on'); document.getElementById('fpb').classList.remove('on');
+  document.querySelectorAll('.sent').forEach(function(s){s.className='sent';});
+  document.querySelectorAll('.seg').forEach(function(g){g.classList.remove('hl');});
+  document.getElementById('pnl0').scrollTop = 0;
+  updProg();
+}
+
+function startScroll() {
+  clearInterval(timer);
+  var pnl = document.getElementById('pnl0');
+  var sents = Array.from(pnl.querySelectorAll('.sent'));
+  if(sents.length === 0) return;
+  var idx = 0;
+  sents.forEach(function(s, i) { if(s.classList.contains('current') || s.classList.contains('read')) idx = i; });
+  timer = setInterval(function() {
+    if(idx >= sents.length) { clearInterval(timer); playing = false; document.getElementById('pb').innerHTML = '▶ Play'; document.getElementById('pb').classList.remove('on'); return; }
+    sents.forEach(function(s){ s.classList.remove('current'); });
+    var cur = sents[idx]; cur.classList.add('current');
+    var seg = cur.closest('.seg');
+    if(seg) { document.querySelectorAll('.seg').forEach(function(g){g.classList.remove('hl');}); seg.classList.add('hl'); }
+    var fontSz = parseInt(document.getElementById('fntV').textContent);
+    pnl.scrollTo({ top: cur.offsetTop - (fontSz * 4), behavior: 'smooth' });
+    if(idx > 0) sents[idx-1].classList.add('read');
+    updProg(); idx++;
+  }, (4000 / spd));
+}
+
+function updSpd() { spd = parseFloat(document.getElementById('spd').value); document.getElementById('spdV').textContent = spd; if(playing) startScroll(); }
+function chFnt(v) {
+  var e = document.getElementById('fntV'); var n = Math.max(16, Math.min(50, parseInt(e.textContent) + v)); e.textContent = n;
+  var tp = document.getElementById('tp'); if(tp) tp.style.fontSize = n + 'px'; if(playing) startScroll();
+}
+
+function updProg() {
+  var pnl = document.getElementById('pnl0'); var total = pnl.scrollHeight - pnl.clientHeight; var pct = total > 0 ? (pnl.scrollTop / total) * 100 : 0;
+  document.getElementById('progF').style.width = pct + '%';
+  var st = document.getElementById('scTop'); if(pnl.scrollTop > 300) st.classList.add('show'); else st.classList.remove('show');
+}
+document.getElementById('pnl0').addEventListener('scroll', updProg);
+function scToTop() { document.getElementById('pnl0').scrollTo({top:0, behavior:'smooth'}); }
+function copyP(el) { navigator.clipboard.writeText(el.innerText).then(function() { el.classList.add('copied'); setTimeout(function() { el.classList.remove('copied'); }, 1500); }); }
+
+/* Camera & Recording */
+async function togCam() {
+  var vid = document.getElementById('camVid');
+  try {
+    var s = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    vid.srcObject = s; document.getElementById('sb').classList.remove('collapsed');
+  } catch(err) { alert('Cannot access camera'); }
+}
+function stopCam() {
+  var vid = document.getElementById('camVid'); if(vid.srcObject) { vid.srcObject.getTracks().forEach(t => t.stop()); vid.srcObject = null; }
+  if(mediaRecorder) stopRecLogic();
+}
+async function togRec() {
+  const rBtn = document.getElementById('recBtn');
+  if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+    mediaRecorder.stop(); clearInterval(recInterval);
+    rBtn.innerText = '⏺ Record'; return;
+  }
+  try {
+    const s = await navigator.mediaDevices.getUserMedia({ video: { width: 1280, height: 720 }, audio: true });
+    recordedChunks = [];
+    mediaRecorder = new MediaRecorder(s, { mimeType: 'video/webm;codecs=vp9,opus' });
+    mediaRecorder.ondataavailable = function(e) { if(e.data.size > 0) recordedChunks.push(e.data); };
+    mediaRecorder.onstop = function() {
+      const b = new Blob(recordedChunks, { type: "video/webm" });
+      const url = URL.createObjectURL(b);
+      const a = document.createElement("a");
+      a.href = url; a.download = "digital_course_lesson.webm"; a.click();
+      s.getTracks().forEach(track => track.stop());
+    };
+    mediaRecorder.start(); recSec = 0;
+    document.getElementById('camTimer').classList.add('on');
+    recInterval = setInterval(updTimer, 1000);
+    rBtn.innerText = '■ Stop';
+  } catch(e) { alert("Please allow camera and microphone access in your browser."); }
+}
+function updTimer() { recSec++; var m = String(Math.floor(recSec / 60)).padStart(2, '0'); var s = String(recSec % 60).padStart(2, '0'); document.getElementById('camTimer').textContent = '● ' + m + ':' + s; }
+
+document.addEventListener('keydown', function(e) {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT') return;
+  if (e.code === 'Space') { e.preventDefault(); togPlay(); }
+  if (e.code === 'ArrowUp') { e.preventDefault(); chFnt(2); }
+  if (e.code === 'ArrowDown') { e.preventDefault(); chFnt(-2); }
+});
+
+buildSB();
+setTimeout(function() { if(D.length > 0 && D[0].lessons) { loadL(0,0); document.getElementById('sb').classList.remove('collapsed'); } }, 300);
+</script>
+
+<!-- Course Builder Section -->
+<div id="course-builder-container" style="max-width:800px;margin:20px auto;padding:30px;font-family:'Lato',sans-serif;direction:ltr;border-top:2px solid #FFC8DD;margin-top:50px;background:#FFFDF9;">
+  <h2 style="color:#C9A84C;font-family:'Playfair Display',serif;font-weight:400;margin-bottom:20px;">Digital Course Builder (All-in-One)</h2>
+
+  <div style="margin-bottom:20px;">
+    <label style="display:block;font-weight:700;margin-bottom:5px;font-size:13px;text-transform:uppercase;letter-spacing:1px;">Course Name</label>
+    <input type="text" id="builder-course-title" placeholder="e.g. How to Create Digital Products" style="width:100%;padding:10px;box-sizing:border-box;border:1px solid #FFC8DD;border-radius:4px;font-family:'Lato',sans-serif;">
+  </div>
+
+  <div id="modules-container"></div>
+
+  <button type="button" onclick="addModule()" style="background:#FFF0F5;color:#C9A84C;padding:10px 20px;border:1.5px solid #C9A84C;border-radius:4px;cursor:pointer;font-size:15px;margin-top:10px;font-family:'Lato',sans-serif;font-weight:700;">+ Add New Module</button>
+
+  <hr style="margin:30px 0;border:0;border-top:1px solid #FFC8DD;">
+
+  <button type="button" onclick="generateAndSaveCourse()" style="background:#1A1A1A;color:#FFFDF9;padding:14px 25px;border:none;border-radius:4px;cursor:pointer;font-size:16px;font-weight:700;width:100%;font-family:'Lato',sans-serif;text-transform:uppercase;letter-spacing:2px;">Save Course & Add to Menu</button>
+</div>
+
+<script>
+let moduleCount = 0;
+
+function addModule() {
+  moduleCount++;
+  const modulesContainer = document.getElementById('modules-container');
+  const moduleWrapper = document.createElement('div');
+  moduleWrapper.className = 'module-box';
+  moduleWrapper.id = 'module-wrapper-' + moduleCount;
+  moduleWrapper.style = "background:#FFF0F5;border:1.5px solid #FFC8DD;padding:15px;margin-bottom:20px;border-radius:6px;position:relative;";
+
+  moduleWrapper.innerHTML = `
+    <h3 style="margin-top:0;color:#C9A84C;font-family:'Playfair Display',serif;font-weight:400;">Module ${moduleCount}</h3>
+    <div style="margin-bottom:15px;">
+      <label style="display:block;font-weight:700;margin-bottom:5px;font-size:12px;text-transform:uppercase;letter-spacing:1px;">Module Name</label>
+      <input type="text" class="module-title" placeholder="e.g. Introduction or Your Expertise" style="width:100%;padding:8px;box-sizing:border-box;border:1px solid #FFC8DD;border-radius:4px;font-family:'Lato',sans-serif;">
+    </div>
+    <div class="lessons-container" id="lessons-container-${moduleCount}"></div>
+    <button type="button" onclick="addLesson(${moduleCount})" style="background:#FFFDF9;color:#C9A84C;padding:6px 14px;border:1px solid #C9A84C;border-radius:4px;cursor:pointer;margin-top:10px;font-family:'Lato',sans-serif;font-weight:600;">+ Add Lesson to Module</button>
+    <button type="button" onclick="document.getElementById('module-wrapper-${moduleCount}').remove()" style="position:absolute;top:15px;right:15px;background:none;border:none;color:#A34747;cursor:pointer;font-weight:700;font-family:'Lato',sans-serif;">Delete Module ✕</button>
+  `;
+  modulesContainer.appendChild(moduleWrapper);
+  addLesson(moduleCount);
+}
+
+function addLesson(moduleId) {
+  const lessonsContainer = document.getElementById('lessons-container-' + moduleId);
+  const lessonCount = lessonsContainer.children.length + 1;
+  const lessonWrapper = document.createElement('div');
+  lessonWrapper.className = 'lesson-box';
+  lessonWrapper.style = "background:#fff;border:1px solid #EAEAEA;padding:14px;margin-top:10px;border-radius:4px;position:relative;";
+
+  lessonWrapper.innerHTML = `
+    <h4 style="margin-top:0;color:#7A7A7A;font-family:'Lato',sans-serif;">Lesson ${moduleId}.${lessonCount}</h4>
+    <div style="display:flex;gap:10px;margin-bottom:10px;">
+      <div style="flex:2;">
+        <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Lesson Title</label>
+        <input type="text" class="lesson-title" placeholder="e.g. Welcome to the Course" style="width:100%;padding:6px;box-sizing:border-box;border:1px solid #EAEAEA;font-family:'Lato',sans-serif;">
+      </div>
+      <div style="flex:1;">
+        <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Duration (e.g. 0:00–1:30)</label>
+        <input type="text" class="lesson-time" placeholder="0:00–1:30" style="width:100%;padding:6px;box-sizing:border-box;border:1px solid #EAEAEA;direction:ltr;font-family:'Lato',sans-serif;">
+      </div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Direction Note (optional)</label>
+      <input type="text" class="lesson-direction" placeholder="e.g. Warm smile and confident energy" style="width:100%;padding:6px;box-sizing:border-box;border:1px solid #EAEAEA;font-family:'Lato',sans-serif;">
+    </div>
+    <div>
+      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;">Teleprompter Script</label>
+      <textarea class="lesson-content" rows="4" placeholder="Write the script that the teleprompter will display and highlight..." style="width:100%;padding:8px;box-sizing:border-box;resize:vertical;font-family:'Lato',sans-serif;border:1px solid #EAEAEA;"></textarea>
+    </div>
+    <button type="button" onclick="this.parentElement.remove()" style="position:absolute;top:12px;right:12px;background:none;border:none;color:#A34747;cursor:pointer;font-size:12px;font-family:'Lato',sans-serif;">Remove Lesson ✕</button>
+  `;
+  lessonsContainer.appendChild(lessonWrapper);
+}
+
+function generateAndSaveCourse() {
+  const courseTitle = document.getElementById('builder-course-title').value.trim();
+  if (!courseTitle) { alert('Please enter a course name before saving.'); return; }
+
+  let generatedText = "";
+  const moduleElements = document.getElementsByClassName('module-box');
+  if (moduleElements.length === 0) { alert('Please add at least one module.'); return; }
+
+  for (let i = 0; i < moduleElements.length; i++) {
+    const modEl = moduleElements[i];
+    const modTitle = modEl.querySelector('.module-title').value.trim() || 'Module ' + (i+1);
+    generatedText += `### Module ${i+1}: ${modTitle}\n`;
+
+    const lessonElements = modEl.getElementsByClassName('lesson-box');
+    for (let j = 0; j < lessonElements.length; j++) {
+      const lesEl = lessonElements[j];
+      const lesTitle = lesEl.querySelector('.lesson-title').value.trim() || 'Untitled Lesson';
+      const lesTime = lesEl.querySelector('.lesson-time').value.trim() || '0:00–1:00';
+      const lesDir = lesEl.querySelector('.lesson-direction').value.trim();
+      const lesContent = lesEl.querySelector('.lesson-content').value.trim() || '';
+
+      generatedText += `## Lesson ${i+1}.${j+1} - ${lesTitle}\n`;
+      generatedText += `# ${lesTime}\n`;
+      if (lesDir) generatedText += `[${lesDir}]\n`;
+      generatedText += `${lesContent}\n\n`;
+    }
+  }
+
+  let savedCourses = {};
+  try { savedCourses = JSON.parse(localStorage.getItem('my_custom_teleprompter_courses')) || {}; } catch(e) {}
+  savedCourses[courseTitle] = generatedText;
+  localStorage.setItem('my_custom_teleprompter_courses', JSON.stringify(savedCourses));
+
+  alert('Course "' + courseTitle + '" saved successfully and added to your menu!');
+  updateCourseDropdown();
+}
+
+function updateCourseDropdown() {
+  const dropdown = document.getElementById('course-dropdown-select');
+  if (!dropdown) return;
+  const customOptions = dropdown.querySelectorAll('.custom-user-course');
+  customOptions.forEach(opt => opt.remove());
+  let savedCourses = {};
+  try { savedCourses = JSON.parse(localStorage.getItem('my_custom_teleprompter_courses')) || {}; } catch(e) {}
+  for (const courseTitle in savedCourses) {
+    const option = document.createElement('option');
+    option.value = 'custom_' + courseTitle;
+    option.className = 'custom-user-course';
+    option.textContent = '📝 ' + courseTitle + ' (My Course)';
+    dropdown.appendChild(option);
+  }
+}
+
+function getSelectedCourseText() {
+  const dropdown = document.getElementById('course-dropdown-select');
+  if (!dropdown) return "";
+  const selectedValue = dropdown.value;
+  if (selectedValue.startsWith('custom_')) {
+    const courseTitle = selectedValue.replace('custom_', '');
+    let savedCourses = {};
+    try { savedCourses = JSON.parse(localStorage.getItem('my_custom_teleprompter_courses')) || {}; } catch(e) {}
+    return savedCourses[courseTitle] || "";
+  }
+  return null;
+}
+
+window.addEventListener('DOMContentLoaded', updateCourseDropdown);
+addModule();
+</script>
+</body>
+</html>
